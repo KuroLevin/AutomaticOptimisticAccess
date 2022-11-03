@@ -27,6 +27,8 @@ void pReturnAlloc(struct localAlloc *local, void *obj);
 //if(__sync_lock_test_and_set(p, 0));
 
 
+Entry* entryHead;				// list
+struct DirtyRecord *threadsDirties;
 static inline Bool find(Entry** entryHead, ThreadGlobals* tg, int key, ThreadLocal *fres, struct DirtyRecord * const dty, uint64_t *keyData);
 /*****************************************************************************/
 Bool ListSearch(Entry** entryHead, ThreadGlobals* tg, int key, Data* data) {

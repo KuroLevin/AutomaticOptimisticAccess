@@ -26,7 +26,7 @@ typedef struct{
 	int logLen, len;
 }HashMap;
 
-HashMap hash;
+extern HashMap hash;
 
 Bool HashSearch(HashMap *hash, ThreadGlobals* tg, int key, Data* data);
 Bool HashInsert(HashMap *hash, ThreadGlobals* tg, int key, Data data);

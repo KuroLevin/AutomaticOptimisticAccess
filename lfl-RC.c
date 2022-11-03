@@ -27,6 +27,8 @@
 
 
 
+Entry* entryHead;				// list
+struct DirtyRecord *threadsDirties;
 static inline Bool find(Entry** entryHead, ThreadGlobals* tg, int key, ThreadLocal *fres);
 /*****************************************************************************/
 Bool ListSearch(Entry** entryHead, ThreadGlobals* tg, int key, Data* data) {

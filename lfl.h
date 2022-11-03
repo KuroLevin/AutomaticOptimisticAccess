@@ -6,8 +6,8 @@
 #include "entry.h"
 
 
-Entry* entryHead;				// list
-struct DirtyRecord *threadsDirties;
+extern Entry* entryHead;				// list
+extern struct DirtyRecord *threadsDirties;
 extern volatile Bool run, stop;				// Used to make the threads to busy wait till Stage I is done
 typedef struct{
 	Entry **prev, *cur, *next;

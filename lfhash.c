@@ -8,6 +8,7 @@
 #include "debugging.h"
 #include "allocator.h"
 
+HashMap hash;
 void initHash(HashMap *hash, int logLen){
 	int len = 1<<logLen;
 	hash->array = malloc(sizeof(Entry*)*len);
