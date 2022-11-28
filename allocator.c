@@ -47,17 +47,17 @@ static int Reclamation(struct allocator *global, struct localAlloc *local, void 
 	}
 	local->localVer+=2;
 	if(global->phase.phase!=local->localVer) return -1; //Someone already started next phase.
-    const unsigned long dNp=(unsigned long)local->localVer<<8, dNpd=dNp|1ul;
-    for(int i=0; i<global->numThreads; ++i){
-    		//updating the dirty bit of thread i.
-    		unsigned long dNpTi = global->dirties[i].dirtyNphase;
-    		if(dNpTi>=dNp) continue;
-    		CAS(&global->dirties[i].dirtyNphase, dNpTi, dNpd);
+	const unsigned long dNp=(unsigned long)local->localVer<<8, dNpd=dNp|1ul;
+	for(int i=0; i<global->numThreads; ++i){
+		//updating the dirty bit of thread i.
+		unsigned long dNpTi = global->dirties[i].dirtyNphase;
+		if(dNpTi>=dNp) continue;
+		CAS(&global->dirties[i].dirtyNphase, dNpTi, dNpd);
 		//in case the first CAS failed due to the thread clearning it bits.
-    		dNpTi = global->dirties[i].dirtyNphase;
-    		if(dNpTi>=dNp) continue;
-    		CAS(&global->dirties[i].dirtyNphase, dNpTi, dNpd);
-    }
+		dNpTi = global->dirties[i].dirtyNphase;
+		if(dNpTi>=dNp) continue;
+		CAS(&global->dirties[i].dirtyNphase, dNpTi, dNpd);
+	}
 	int k=0;
 	// Stage1 : Save current hazard pointers in HPlocal
 	for(int i=0;  i < global->numThreads ;  ++i) {
@@ -113,7 +113,7 @@ static void helpCollection(struct localAlloc *local){
 void *NAME(palloc)(struct localAlloc *local){
 	void *ret;
 	PRINTF2("allocating. local=%p\n", local);
-	start:
+start:
 	if(local->alloc_cache!=NULL){
 		if(local->alloc_cache->free > 0){
 			ret = local->alloc_cache->ptrs[--local->alloc_cache->free];

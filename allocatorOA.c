@@ -30,19 +30,19 @@ Set Reclamation(struct allocator *global, struct localAlloc *local){
 #ifdef DISABLE_GC
 	printf("helpStartGc called. GC is disabled\n");
 #else
-    struct verEntry reclaim=global->reclaim, process;
-    int localVer=local->localVer;
-    struct verEntry newReclaim, newProcess;
-    while(reclaim.ver==localVer){
-    		newReclaim.head=reclaim.head;
-    		newReclaim.ver=localVer+1;
-    		if(verCAS(&global->reclaim, reclaim, newReclaim)){
-    			reclaim.ver=localVer+1;
-    			break;
-    		}
-    		reclaim=global->reclaim;
-    }
-    if(reclaim.ver==localVer+1){
+	struct verEntry reclaim=global->reclaim, process;
+	int localVer=local->localVer;
+	struct verEntry newReclaim, newProcess;
+	while(reclaim.ver==localVer){
+		newReclaim.head=reclaim.head;
+		newReclaim.ver=localVer+1;
+		if(verCAS(&global->reclaim, reclaim, newReclaim)){
+			reclaim.ver=localVer+1;
+			break;
+		}
+		reclaim=global->reclaim;
+	}
+	if(reclaim.ver==localVer+1){
 		process=global->toProcess;
 		while(process.ver==localVer){
 			newProcess.head=reclaim.head;
@@ -53,46 +53,46 @@ Set Reclamation(struct allocator *global, struct localAlloc *local){
 		}
 		reclaim=global->reclaim;
 		while(reclaim.ver==localVer+1){
-				newReclaim.head=NULL;
-				newReclaim.ver=localVer+2;
-				if(verCAS(&global->reclaim, reclaim, newReclaim))
-					break;
-				reclaim=global->reclaim;
+			newReclaim.head=NULL;
+			newReclaim.ver=localVer+2;
+			if(verCAS(&global->reclaim, reclaim, newReclaim))
+				break;
+			reclaim=global->reclaim;
 		}
-    }
-    local->localVer+=2;
-    __sync_synchronize();
+	}
+	local->localVer+=2;
+	__sync_synchronize();
 
-    const unsigned long dNp=(unsigned long)local->localVer<<8, dNpd=dNp|1ul;
-    for(int i=0; i<global->numThreads; ++i){
-    		//updating the dirty bit of thread i.
-    		unsigned long dNpTi = global->dirties[i].dirtyNphase;
-    		if(dNpTi>=dNp) continue;
-    		CAS(&global->dirties[i].dirtyNphase, dNpTi, dNpd);
+	const unsigned long dNp=(unsigned long)local->localVer<<8, dNpd=dNp|1ul;
+	for(int i=0; i<global->numThreads; ++i){
+		//updating the dirty bit of thread i.
+		unsigned long dNpTi = global->dirties[i].dirtyNphase;
+		if(dNpTi>=dNp) continue;
+		CAS(&global->dirties[i].dirtyNphase, dNpTi, dNpd);
 		//in case the first CAS failed due to the thread clearning it bits.
-    		dNpTi = global->dirties[i].dirtyNphase;
-    		if(dNpTi>=dNp) continue;
-    		CAS(&global->dirties[i].dirtyNphase, dNpTi, dNpd);
-    }
-    __sync_synchronize();
-    if(hps==NULL)
-    		hps=setInit(global->numHPEntries*2);
-    else
-    		setReset(hps);
-    Set HPs=hps;
-    // Stage1 : Save current hazard pointers in HPlocal
-    for(int i=0;  i < global->numThreads ;  ++i) {
-        Entry* hptr0 = threadsDirties[i].HPs[0];
-        Entry* hptr1 = threadsDirties[i].HPs[1];
-        Entry* hptr2 = threadsDirties[i].HPs[2];
-        if (hptr0 != NULL )
-        		setAddP(HPs, hptr0);
-        if (hptr1 != NULL )
-        		setAddP(HPs, hptr1);
-        if (hptr2 != NULL )
-        		setAddP(HPs, hptr2);
-    }
-    return 0;
+		dNpTi = global->dirties[i].dirtyNphase;
+		if(dNpTi>=dNp) continue;
+		CAS(&global->dirties[i].dirtyNphase, dNpTi, dNpd);
+	}
+	__sync_synchronize();
+	if(hps==NULL)
+		hps=setInit(global->numHPEntries*2);
+	else
+		setReset(hps);
+	Set HPs=hps;
+	// Stage1 : Save current hazard pointers in HPlocal
+	for(int i=0;  i < global->numThreads ;  ++i) {
+		Entry* hptr0 = threadsDirties[i].HPs[0];
+		Entry* hptr1 = threadsDirties[i].HPs[1];
+		Entry* hptr2 = threadsDirties[i].HPs[2];
+		if (hptr0 != NULL )
+			setAddP(HPs, hptr0);
+		if (hptr1 != NULL )
+			setAddP(HPs, hptr1);
+		if (hptr2 != NULL )
+			setAddP(HPs, hptr2);
+	}
+	return 0;
 #endif
 }
 
@@ -122,7 +122,7 @@ int exist(void **arr, void *ptr){
 }
 void Recycle(struct allocator *global, struct localAlloc *local, Set HPs){
 	while(1){
-        int k,i;
+		int k,i;
 		struct allocEntry *entry = pop(&global->toProcess, local->localVer), *nxt;
 		if(entry==RECYCLE_NEEDED)
 			return;
@@ -157,10 +157,10 @@ void Recycle(struct allocator *global, struct localAlloc *local, Set HPs){
 }
 
 void triggerCollection(struct allocator *global, struct localAlloc *local){
-    PRINTGC("trigger collection. myver=%d\n", local->localVer);
+	PRINTGC("trigger collection. myver=%d\n", local->localVer);
 #ifdef DISABLE_GC
-    printf("gc is disabled. Aborted\n");
-    assert(0);
+	printf("gc is disabled. Aborted\n");
+	assert(0);
 #else
 	//printCount(local, global);//to help debugging.
 	Reclamation(global, local);
@@ -173,17 +173,17 @@ void *palloc(struct localAlloc *local){
 	void *ret;
 	PRINTF2("allocating. local=%p\n", local);
 start:
-    if(likely(local->alloc_cache!=NULL))
-        if(likely(local->alloc_cache->free > 0)){
-            ret = local->alloc_cache->ptrs[--local->alloc_cache->free];
-            PRINTF2("allocate %p. cache=%p[%d]\n", ret,local->alloc_cache,
-            		local->alloc_cache->free);
+	if(likely(local->alloc_cache!=NULL))
+		if(likely(local->alloc_cache->free > 0)){
+			ret = local->alloc_cache->ptrs[--local->alloc_cache->free];
+			PRINTF2("allocate %p. cache=%p[%d]\n", ret,local->alloc_cache,
+					local->alloc_cache->free);
 #ifdef ZERO_ALLOC
-            memset(ret, 0, local->global->entrySize);
+			memset(ret, 0, local->global->entrySize);
 #endif
-            return ret;
-        }
-	//free(local->alloc_cache) //dont care about MM here.
+			return ret;
+		}
+		//free(local->alloc_cache) //dont care about MM here.
 	struct allocator *alc = local->global;
 	struct allocEntry *next, *curhead;
 	PRINTF2("allocating from global=%p\n", alc);
@@ -202,7 +202,7 @@ start:
 			ret = local->alloc_cache->ptrs[--local->alloc_cache->free];
 			PRINTF2("allocate cache from global. entry= %p\n", ret);
 #ifdef ZERO_ALLOC
-		 	memset(ret, 0, alc->entrySize);
+			 memset(ret, 0, alc->entrySize);
 #endif
 			return ret;*/
 		}
@@ -222,27 +222,27 @@ start:
 //To be used by HP or DropTheAnchor that want to use pool allocator.
 void pReturnAlloc(struct localAlloc *local, void *obj){
 	PRINTF2("pReturnAlloc. local=%p\n", local);
-    struct allocator *alc = local->global;
-    if(local->alloc_cache!=NULL){
-        if(local->alloc_cache->free < ENTRIES_PER_CACHE){
-            local->alloc_cache->ptrs[local->alloc_cache->free++] = obj;
-            PRINTF2("pReturnAlloc %p. cache=%p[%d]\n", obj,local->alloc_cache,
-            		local->alloc_cache->free);
-            return;
-        }
-        struct allocator *alc = local->global;
-        struct allocEntry *curalloc, *toalloc=local->alloc_cache;
-        do{//pushing the full cache to ready nodes.
-            curalloc = alc->head;
-            toalloc->next = curalloc;
-        }while(!CAS(&alc->head, curalloc, toalloc));
-        local->alloc_cache=NULL;
-    }
+	struct allocator *alc = local->global;
+	if(local->alloc_cache!=NULL){
+		if(local->alloc_cache->free < ENTRIES_PER_CACHE){
+			local->alloc_cache->ptrs[local->alloc_cache->free++] = obj;
+			PRINTF2("pReturnAlloc %p. cache=%p[%d]\n", obj,local->alloc_cache,
+					local->alloc_cache->free);
+			return;
+		}
+		struct allocator *alc = local->global;
+		struct allocEntry *curalloc, *toalloc=local->alloc_cache;
+		do{//pushing the full cache to ready nodes.
+			curalloc = alc->head;
+			toalloc->next = curalloc;
+		}while(!CAS(&alc->head, curalloc, toalloc));
+		local->alloc_cache=NULL;
+	}
 	local->alloc_cache = malloc(sizeof(struct allocEntry));
 	memset(local->alloc_cache, 0, sizeof(struct allocEntry));
 	local->alloc_cache->size = alc->entrySize;
 	local->alloc_cache->free = 1;
-    local->alloc_cache->ptrs[0]=obj;
+	local->alloc_cache->ptrs[0]=obj;
 }
 
 void pfree(struct localAlloc *local, void *obj){
@@ -250,34 +250,34 @@ void pfree(struct localAlloc *local, void *obj){
 #ifdef DISABLE_FREE
 	return;
 #else
-    struct allocator *alc = local->global;
-    struct allocEntry *tofree;
-    if(obj==NULL) return;
+	struct allocator *alc = local->global;
+	struct allocEntry *tofree;
+	if(obj==NULL) return;
 restart:
-    if(local->free_cache!=NULL){
-        if(local->free_cache->free < ENTRIES_PER_CACHE){
-            local->free_cache->ptrs[local->free_cache->free++] = obj;
-            return;
-        }
+	if(local->free_cache!=NULL){
+		if(local->free_cache->free < ENTRIES_PER_CACHE){
+			local->free_cache->ptrs[local->free_cache->free++] = obj;
+			return;
+		}
 
-        tofree = local->free_cache;
-        struct verEntry reclaim, newitem;
-        do{
-        		reclaim = alc->reclaim;
-        		if(reclaim.ver != local->localVer){
-        			triggerCollection(alc, local);
-                goto restart;
-            }
-            tofree->next = reclaim.head;
-        		newitem.head=tofree;
-        		newitem.ver=local->localVer;
-        }while(!verCAS(&alc->reclaim, reclaim, newitem));
-    }
+		tofree = local->free_cache;
+		struct verEntry reclaim, newitem;
+		do{
+			reclaim = alc->reclaim;
+			if(reclaim.ver != local->localVer){
+				triggerCollection(alc, local);
+				goto restart;
+			}
+			tofree->next = reclaim.head;
+			newitem.head=tofree;
+			newitem.ver=local->localVer;
+		}while(!verCAS(&alc->reclaim, reclaim, newitem));
+	}
 	local->free_cache = malloc(sizeof(struct allocEntry));
 	DEB(memset(local->free_cache, 0, sizeof(struct allocEntry)));
 	local->free_cache->size = alc->entrySize;
 	local->free_cache->free = 1;
-    local->free_cache->ptrs[0]=obj;
+	local->free_cache->ptrs[0]=obj;
 #endif
 }
 
@@ -295,15 +295,15 @@ struct allocEntry *allocEntry(int size){
 	return head;
 }
 void getMoreSpace(struct allocator *alc){
-    /*	int size = alc->entrySize;
-     int totalSize = size*ENTRIES_PER_CACHE;//total size per cache
-     int requiredSize = alc->numCaches; //we double the amount of memory. so we should allocate totalSize.
-     struct allocEntry *head, *tmp;
-     for(int i=0; i<alc->numCaches; ++i){
-     tmp = head;
-     head = allocEntry(size);
-     head->next = tmp;
-     }*/
+	/*	int size = alc->entrySize;
+	 int totalSize = size*ENTRIES_PER_CACHE;//total size per cache
+	 int requiredSize = alc->numCaches; //we double the amount of memory. so we should allocate totalSize.
+	 struct allocEntry *head, *tmp;
+	 for(int i=0; i<alc->numCaches; ++i){
+	 tmp = head;
+	 head = allocEntry(size);
+	 head->next = tmp;
+	 }*/
 	assert(0);
 	//WHAT SHOULD I DO?/
 }
@@ -361,15 +361,15 @@ int cglob(struct allocator *global){
 	return cals(global->reclaim.head)+cals(global->toProcess.head)+cals(global->head);
 }
 void printCount(struct localAlloc *local, struct allocator* global){
-    barrier(local->tid, global->numThreads);
-    int lc = ((local->alloc_cache)?local->alloc_cache->free:0)+((local->free_cache)?local->free_cache->free:0);
-    int gc=cglob(global);
-    //int Count(hash);
-    int slc=0;//Count(hash);
-    if(global->numThreads!=1)
-    		printf("the function was designed for single threaded program. Please improve it.\n");
-    printf("accounted for %d\n", lc+gc+slc);
-    barrier(local->tid, global->numThreads);
+	barrier(local->tid, global->numThreads);
+	int lc = ((local->alloc_cache)?local->alloc_cache->free:0)+((local->free_cache)?local->free_cache->free:0);
+	int gc=cglob(global);
+	//int Count(hash);
+	int slc=0;//Count(hash);
+	if(global->numThreads!=1)
+		printf("the function was designed for single threaded program. Please improve it.\n");
+	printf("accounted for %d\n", lc+gc+slc);
+	barrier(local->tid, global->numThreads);
 }
 
 void swap(void *a[], int ia, void *b[], int ib){
@@ -399,17 +399,17 @@ void randAllocator(struct allocator *alc, int numEntries){
 #ifdef DEBUGGING
 int main(){
 	struct allocator global={0};
-    global.dirties = NULL;
+	global.dirties = NULL;
 	initAllocator(&global, 32, 8);
 	struct localAlloc loc1={0}, loc2={0};
 	loc1.global=&global;
 	loc2.global=&global;
-    int k=0;
+	int k=0;
 	for(int i=0; i<6; ++i){
 		void *val = palloc(&loc1);
 		printf("val=%p\n", val);
 		pfree(&loc2, val);
-        HPArray[k++]=val;
+		HPArray[k++]=val;
 	}
 	for(int i=0; i<2; ++i){
 		void *val = palloc(&loc2);
