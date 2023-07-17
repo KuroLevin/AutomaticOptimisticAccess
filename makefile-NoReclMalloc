@@ -4,8 +4,8 @@ CC = gcc
 CC_FLAGS = -g -ggdb -O3 -m64 -std=c99 -Wall -fgnu89-inline -DMALLOC -Wno-unused-function
 CC_CAS = -pthread
 LNK_GTHREAD = -pthread
-TCM = -L. -ltcmalloc
-OBJECTS = lfl-NoOrDelayRecl.o worker.o lfhash.o allocator.o main_test.o debugging.o
+TCM =# -L. -ltcmalloc
+OBJECTS = lfl-NoOrDelayRecl.o worker.o lfhash.o main_test.o debugging.o
 TEST_OBJS = 
 
 #######################ALL######################
@@ -28,9 +28,6 @@ hash:
 	
 ######################OBJECTS######################
 
-
-allocator.o: allocator.c allocator.h	
-	${CC} ${CC_FLAGS} ${CC_CAS} -c $*.c -o $@
 
 lfhash.o: lfhash.c lfhash.h globals.h lfl.h 	
 	${CC} ${CC_FLAGS} ${CC_CAS} -c $*.c -o $@

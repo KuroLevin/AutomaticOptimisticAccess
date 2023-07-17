@@ -30,7 +30,7 @@ hash:
 lfhash.o: lfhash.c lfhash.h globals.h lfl.h  	
 	${CC} ${CC_FLAGS} ${CC_CAS} -c $*.c -o $@
 
-allocatorOA.o: allocator.c allocator.h	
+allocatorOA.o: allocatorOA.c allocator.h	
 	${CC} ${CC_FLAGS} ${CC_CAS} -c $*.c -o $@
 
 lfl-MOA.o: lfl-MOA.c 

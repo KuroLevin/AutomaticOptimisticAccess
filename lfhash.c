@@ -12,7 +12,7 @@ HashMap hash;
 void initHash(HashMap *hash, int logLen){
 	int len = 1<<logLen;
 	hash->array = malloc(sizeof(Entry*)*len);
-	_assert(hash->array!=NULL);
+	assert(hash->array!=NULL);
 	hash->logLen=logLen;
 	hash->len = len;
 	memset(hash->array, 0, sizeof(Entry*)*len);
@@ -25,19 +25,19 @@ void initHash(HashMap *hash, int logLen){
 /*****************************************************************************/
 Bool HashSearch(HashMap *hash, ThreadGlobals* tg, int key, Data* data) {
 	int bucket = HASH(key, hash->logLen);
-	_assert(bucket>=0 && bucket<hash->len);
+	assert(bucket>=0 && bucket<hash->len);
 	return ListSearch(&hash->array[bucket], tg, key, data);
 }
 /*****************************************************************************/
 Bool HashInsert(HashMap *hash, ThreadGlobals* tg, int key, Data data) {
 	int bucket = HASH(key, hash->logLen);
-	_assert(bucket>=0 && bucket<hash->len);
+	assert(bucket>=0 && bucket<hash->len);
 	return ListInsert(&hash->array[bucket], tg, key, data);
 }
 /*****************************************************************************/
 Bool HashDelete(HashMap *hash, ThreadGlobals* tg, int key) {
 	int bucket = HASH(key, hash->logLen);
-	_assert(bucket>=0 && bucket<hash->len);
+	assert(bucket>=0 && bucket<hash->len);
 	return ListDelete(&hash->array[bucket], tg, key);
 }
 
