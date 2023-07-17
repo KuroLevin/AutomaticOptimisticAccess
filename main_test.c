@@ -22,6 +22,7 @@ int HEAP_SIZE=20000;
 #include <pthread.h>
 #include <unistd.h>
 #include "debugging.h"
+#include "../lrmalloc/lrmalloc.h"
 const int HPsPerThread=3;
 long num_ops=0;
 volatile Bool run = FALSE, stop = FALSE;
@@ -44,9 +45,11 @@ int main(int argc, char *argv[]) {
 #if !defined(OA)
 	allocSize = 6000000;//15000000
 #elif defined(MOA)
-	allocSize=(numThreads>32 || (numThreads==32 && input.fractionInserts>0.2))?50000:allocSize; //for 32 threads a heap of 20000 items is too small.
+//	allocSize=(numThreads>32 || (numThreads==32 && input.fractionInserts>0.2))?50000:allocSize; //for 32 threads a heap of 20000 items is too small.
 #endif
+#ifndef MALLOC
 	init_allocator(&allocator, lalloc, numThreads, dirties, allocSize, HPsPerThread);
+#endif
 #ifdef HASH_OP
 	int logLen=0, size=(int)(initListSize/LOAD_FACTOR);
 	while(size/=2) logLen++;
@@ -82,7 +85,7 @@ int main(int argc, char *argv[]) {
 	}
 	//TIME g_timer_stop(t);
 
-#ifndef MALLOC
+#if !defined(MALLOC) && !defined(EMOA)
 	destroyAllocator(&allocator);
 #endif
 #if defined(OA)
@@ -96,7 +99,7 @@ int main(int argc, char *argv[]) {
 			numThreads, num_ops, num_ops/M, numPhases, (double)time, initListSize, elementsRange,
 			1-tg[0].input.fractionInserts-tg[0].input.fractionDeletes);
 	printf("___ %ld %d %.2f\n", num_ops, numThreads, 1-tg[0].input.fractionInserts-tg[0].input.fractionDeletes);
-#if !defined(MOA) && !defined(OA)
+#if !defined(MOA) && !defined(OA) && !defined(MALLOC)
 extern int alcctr;
 printf("alcctr = %d\n", alcctr);
 //extern int m;
@@ -186,6 +189,8 @@ static Bool ListInsertFAST(Entry** entryHead, ThreadGlobals* tg, int key, Data d
 		//create entry
 #ifdef MALLOC
 		newEntry = (Entry*)malloc(sizeof(Entry));
+#elif EMOA
+		newEntry = (Entry*)lf_palloc(sizeof(Entry));
 #else
 		newEntry = (Entry*)palloc(tg->entryAllocator);
 #endif

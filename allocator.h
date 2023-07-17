@@ -11,6 +11,7 @@
 //#define MORE_CHECKS
 
 #include "Atomic.h"
+#include "globals.h"
 #include <string.h>
 #define ENTRIES_PER_CACHE 126
 #define CHUNK_SIZE (1<<19)
@@ -38,7 +39,7 @@ typedef unsigned long u64;
 struct DirtyRecord{
 	union{
 		char dirty;
-		long dirtyNphase;
+		unsigned long long dirtyNphase;
 	};
 	void *HPs[7];
 }__attribute__((aligned(64)));
@@ -130,5 +131,7 @@ static int assert_in_heap(void *ptr);
 static inline int is_cur_phase(unsigned long data, unsigned long phaseShifted){
 	return (data&0xFFFFFFFF00000000ull)==phaseShifted;
 }
+
+void retire(ThreadGlobals *tg, void *node);
 
 #endif /* ALLOCATOR_H_ */

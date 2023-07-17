@@ -2,8 +2,8 @@
 
 generate_threads_list ()
 {
-    echo 1 2 4 8 16 32 64
-#   echo 1 `seq 4 4 40 `
+#    echo 1 2 4 8 16 32 64
+    echo `seq 32`
 }
 
 gold=measure-$1-list-P`hostname | cut -c11`-`date +%H-%M@%d-%m-%y`
@@ -20,25 +20,61 @@ if [ $# -ge 3 ];
 fi
 ((key_range=num_initial_keys*2))
 
+
 test_file_AOA=./test-AOA
 test_file_MOA=./test-MOA
-test_file_NoRecl=./test-NoRecl
+test_file_EMOA_PA=./test-EMOA-PA
+test_file_EMOA_DN=./test-EMOA-DN
+test_file_EMOA_RM=./test-EMOA-RM
+test_file_TMOA_PA=./test-TMOA-PA
+test_file_TMOA_DN=./test-TMOA-DN
+test_file_TMOA_RM=./test-TMOA-RM
 test_file_RC=./test-RC
+test_file_NoRecl=./test-NoRecl
 test_file_NoReclMalloc=./test-NoReclMalloc
 
 log_file_AOA=$gold-AOA
 log_file_MOA=$gold-MOA
+log_file_EMOA_PA=$gold-EMOA-PA
+log_file_EMOA_DN=$gold-EMOA-DN
+log_file_EMOA_RM=$gold-EMOA-RM
+log_file_TMOA_PA=$gold-TMOA-PA
+log_file_TMOA_DN=$gold-TMOA-DN
+log_file_TMOA_RM=$gold-TMOA-RM
 log_file_RC=$gold-RC
-log_file_NoReclMalloc=$gold-NoReclMalloc
 log_file_NoRecl=$gold-NoRecl
-
+log_file_NoReclMalloc=$gold-NoReclMalloc
 
 if [ ! -f $test_file_AOA ]; then
     echo "Test file $test_file_AOA does not exist. Exiting"
     exit
 fi
 if [ ! -f $test_file_MOA ]; then
-    echo "Test file $test_file_AOA does not exist. Exiting"
+    echo "Test file $test_file_MOA does not exist. Exiting"
+    exit
+fi
+if [ ! -f $test_file_EMOA_PA ]; then
+    echo "Test file $test_file_EMOA_PA does not exist. Exiting"
+    exit
+fi
+if [ ! -f $test_file_EMOA_DN ]; then
+    echo "Test file $test_file_EMOA_DN does not exist. Exiting"
+    exit
+fi
+if [ ! -f $test_file_EMOA_RM ]; then
+    echo "Test file $test_file_EMOA_RM does not exist. Exiting"
+    exit
+fi
+if [ ! -f $test_file_TMOA_PA ]; then
+    echo "Test file $test_file_TMOA_PA does not exist. Exiting"
+    exit
+fi
+if [ ! -f $test_file_TMOA_DN ]; then
+    echo "Test file $test_file_TMOA_DN does not exist. Exiting"
+    exit
+fi
+if [ ! -f $test_file_TMOA_RM ]; then
+    echo "Test file $test_file_TMOA_RM does not exist. Exiting"
     exit
 fi
 if [ ! -f $test_file_NoRecl ]; then
@@ -49,8 +85,10 @@ if [ ! -f $test_file_RC ]; then
     echo "Test file $test_file_RC does not exist. Exiting"
     exit
 fi
+
+
 if [ -f $log_file_AOA ]; then
-    echo "Log file $log_file_RoF_IF already exists. Exiting"
+    echo "Log file $log_file_AOA already exists. Exiting"
     exit
 fi
 if [ -f $log_file_NoRecl ]; then
@@ -58,9 +96,9 @@ if [ -f $log_file_NoRecl ]; then
     exit
 fi
 
+LD_PRELOAD=../lrmalloc/liblrmalloc.so
 
-
-for f in 0.8
+for f in 0 0.5 0.8 1
 do
 
     for i in $(generate_threads_list)
@@ -70,15 +108,21 @@ do
 
         for j in `seq $num_runs`
         do
-            $test_file_AOA $i $args 0 $j >> $log_file_AOA 2>&1
-            $test_file_MOA $i $args 0 $j >> $log_file_MOA 2>&1
-            $test_file_RC $i $args 0 $j >> $log_file_RC 2>&1
-            $test_file_NoRecl $i $args $j >> $log_file_NoRecl 2>&1
+#            $test_file_AOA $i $args 0 $j >> $log_file_AOA 2>&1
+	    LD_PRELOAD=../lrmalloc/liblrmalloc.so $test_file_MOA $i $args 32000 $j >> $log_file_MOA 2>&1
+#            $test_file_EMOA_PA $i $args 0 $j >> $log_file_EMOA_PA 2>&1
+#            $test_file_EMOA_DN $i $args 0 $j >> $log_file_EMOA_DN 2>&1
+#            $test_file_EMOA_RM $i $args 0 $j >> $log_file_EMOA_RM 2>&1
+#            $test_file_TMOA_PA $i $args 0 $j >> $log_file_TMOA_PA 2>&1
+#            $test_file_TMOA_DN $i $args 0 $j >> $log_file_TMOA_DN 2>&1
+#            $test_file_TMOA_RM $i $args 0 $j >> $log_file_TMOA_RM 2>&1
+#            $test_file_RC $i $args 0 $j >> $log_file_RC 2>&1
+	    LD_PRELOAD=../lrmalloc/liblrmalloc.so $test_file_NoRecl $i $args $j >> $log_file_NoRecl 2>&1
 #                $test_file_NoReclMalloc $i $args >> $log_file_NoReclMalloc 2>&1
         done
         printf "$i "
     done
-    printf " finish frac $f"
+    printf "finish frac $f "
     printf "\n"
 done
 
